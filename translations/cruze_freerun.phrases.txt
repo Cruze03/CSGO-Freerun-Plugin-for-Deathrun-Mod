@@ -1,0 +1,40 @@
+"Phrases"
+{
+	"RoundStart Message"
+	{
+		"en"		"Type {green}!fr{default} to give {blue}Counter-Terrorists {default}a {green}freerun!"
+	}
+	"You need to be T"
+	{
+		"en"		"You need to be {orange}Terrorist {default}in order to have access to this command!"
+	}
+	"Already Used"
+	{
+		"en"		"You have already used this command!"
+	}
+	"Freerun!"
+	{
+		"en"		"The {orange}Terrorist {default}decided to give a {green}FREERUN {default}to everyone this round, {green}RUN! {default}:D"
+	}
+	"FreerunCTMsg"
+	{
+		"en"		"{orange}Terrorist{default} can no longer press trap buttons!"
+	}
+	"Freerun Hint!"
+	{
+		"en"		"<b>Its <font color='#00ff00'>FREERUN!</font></b>"
+	}
+	"Too Late"
+	{
+		"#format"	"{1:d}"
+		"en"		"You can use this command in first {darkred}{1} {default}seconds only!"
+	}
+	"You need to be alive"
+	{
+		"en"		"You need to be alive to use this command!"
+	}
+	"You cannot activate"
+	{
+		"en"		"{lightgreen}You can not activate any {darkred}Traps{lightgreen} as you decided to give freerun. {darkred}Deal {green}with {blue}it.{default}"
+	}
+}
