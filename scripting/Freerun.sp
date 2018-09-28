@@ -9,10 +9,10 @@
 
 ConVar gc_bfrEnabled, gc_ifrTime, gc_sPrefix;
 
+int g_bEnabled;
 float g_iFreerunTime;
 char PrefixName[128];
 
-int g_bEnabled;
 bool Freerun = false;
 bool FreerunTime = false;
 
@@ -27,9 +27,9 @@ public Plugin:myinfo =
 
 public void OnPluginStart()
 {
-	gc_bfrEnabled          = CreateConVar("sm_freerun_enable", "1", 												"Whether to enable plugin. 1 to enable, any other interger number to disable.");
-	gc_sPrefix         	 = CreateConVar("sm_freerun_prefix", "[{purple}♚ {green}FreeRun {purple}♚{default}] ", "Prefix of the plugin. Leave blank for no prefix.");
-	gc_ifrTime             = CreateConVar("sm_freerun_time", "120.0", 											"The time during which T can enter the command. 120.0 = ✔. 120 = ✖");
+	gc_bfrEnabled		= CreateConVar("sm_freerun_enable", "1",													"Whether to enable plugin. 1 to enable, any other interger number to disable.");
+	gc_sPrefix			= CreateConVar("sm_freerun_prefix", "[{purple}♚ {green}FreeRun {purple}♚{default}] ",	"Prefix of the plugin. Leave blank for no prefix. **LEAVE AN EXTRA SPACE AFTER YOUR DESIRED PREFIX LIKE THE DEFAULT PREFIX HAS**");
+	gc_ifrTime			= CreateConVar("sm_freerun_time", "120.0",												"The time during which T can enter the command. 120.0 = ✔. 120 = ✖");
    
 	HookEvent("round_start", OnFreerunRoundStart);
    
@@ -39,15 +39,10 @@ public void OnPluginStart()
 	AutoExecConfig(true, "dr_freerun");
 	LoadTranslations("cruze_freerun.phrases");
 	
-	HookConVarChange(gc_bfrEnabled, OnSettingChanged);
 	HookConVarChange(gc_ifrTime, OnSettingChanged);
 }
 public int OnSettingChanged(Handle convar, const char[] oldValue, const char[] newValue)
 {
-	if(convar == gc_bfrEnabled)
-	{
-		g_bEnabled = StringToInt(newValue);
-	}
 	if (convar == gc_ifrTime)
 	{
 		g_iFreerunTime = StringToFloat(newValue);
@@ -55,7 +50,7 @@ public int OnSettingChanged(Handle convar, const char[] oldValue, const char[] n
 }
 public void OnConfigsExecuted()
 {
-	g_bEnabled = GetConVarInt(gc_bfrEnabled);
+	g_bEnabled = GetConVarBool(gc_bfrEnabled);
 	g_iFreerunTime	= GetConVarFloat(gc_ifrTime);
 	GetConVarString(gc_sPrefix, PrefixName, sizeof(PrefixName));
 }
@@ -73,8 +68,9 @@ public void OnFreerunRoundStart(Handle event, char[] name, bool dbc)
     {
         if(IsClientInGame(i) && GetClientTeam(i) == 2)
         {
-			//CPrintToChat(i,"%s Type {green}!fr{default} to give {blue}Counter-Terrorists {default}a {green}freerun!", g_sPluginPrefix);
-			if (g_bEnabled == 1)
+			
+			if (g_bEnabled)
+				//CPrintToChat(i,"%s Type {green}!fr{default} to give {blue}Counter-Terrorists {default}a {green}freerun!", PrefixName);
 				CPrintToChat(i,"%s%t", PrefixName, "RoundStart Message");
         }
     }
@@ -87,7 +83,7 @@ public Action freeruntime(Handle freeruntime)
  
 public Action CMD_Freerun(int client, int args)
 {
-	if (g_bEnabled == 1)
+	if (g_bEnabled)
 	{
 		if (IsPlayerAlive(client))
 		{
