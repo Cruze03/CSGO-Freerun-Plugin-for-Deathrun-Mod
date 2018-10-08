@@ -37,4 +37,8 @@
 	{
 		"en"		"{lightgreen}You can not activate any {darkred}Traps{lightgreen} as you decided to give freerun. {darkred}Deal {green}with {blue}it.{default}"
 	}
+	"You cannot activate CT"
+	{
+		"en"		"{lightgreen}You can not activate any {darkred}Traps{lightgreen} as {orange}Terrorist{lightgreen} gave {blue}Counter-Terrorists{lightgreen} a freerun."
+	}
 }
