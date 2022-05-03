@@ -5,7 +5,7 @@
 #include <multicolors>
 #include <freerun>
 
-#define PLUGIN_VERSION "1.3"
+#define PLUGIN_VERSION "1.35"
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -19,7 +19,7 @@ int g_bEnabled;
 bool g_bFreerun = false;
 bool g_bFreerunTime = false;
 
-Handle g_hOnFreerun;
+Handle g_hFreerun, g_hOnFreerun;
 
 public Plugin myinfo =
 {
@@ -74,12 +74,14 @@ public int OnSettingChanged(Handle convar, const char[] oldValue, const char[] n
 		Format(g_sPrefixName, sizeof(g_sPrefixName), newValue);
 	}
 }
-public void OnConfigsExecuted()
+public void OnMapStart()
 {
 	g_bEnabled = GetConVarBool(g_hEnabled);
 	g_fFreerunTime	= GetConVarFloat(g_hTime);
 	
 	GetConVarString(g_hPrefix, g_sPrefixName, sizeof(g_sPrefixName));
+	
+	g_hFreerun = null;
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
@@ -90,7 +92,8 @@ public void OnFreerunRoundStart(Handle event, char[] name, bool dbc)
 {
 	g_bFreerun = false;
 	g_bFreerunTime = true;
-	CreateTimer(GetConVarFloat(g_hTime), freeruntime);
+	delete g_hFreerun;
+	g_hFreerun = CreateTimer(GetConVarFloat(g_hTime), freeruntime, _, TIMER_FLAG_NO_MAPCHANGE);
 	for(int i = 1; i <= MaxClients; i++)
     {
         if(IsClientInGame(i) && GetClientTeam(i) == 2)
@@ -103,8 +106,9 @@ public void OnFreerunRoundStart(Handle event, char[] name, bool dbc)
     }
 }
  
-public Action freeruntime(Handle freeruntime)
+public Action freeruntime(Handle timer)
 {
+	g_hFreerun = null;
 	g_bFreerunTime = false;
 }
  
