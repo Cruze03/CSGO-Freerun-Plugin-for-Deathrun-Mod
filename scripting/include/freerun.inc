@@ -1,0 +1,1 @@
+forward void FR_OnFreerun(int client);
