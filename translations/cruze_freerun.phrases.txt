@@ -2,7 +2,7 @@
 {
 	"RoundStart Message"
 	{
-		"en"		"Type {green}!fr{default} to give {blue}Counter-Terrorists {default}a {green}freerun!"
+		"en"		"Type {green}!fr{default} to give {lightblue}Counter-Terrorists {default}a {green}freerun!"
 	}
 	"You need to be T"
 	{
@@ -35,10 +35,10 @@
 	}
 	"You cannot activate"
 	{
-		"en"		"{lightgreen}You can not activate any {darkred}Traps{lightgreen} as you decided to give freerun. {darkred}Deal {green}with {blue}it.{default}"
+		"en"		"{lightgreen}You can not activate any {darkred}Traps{lightgreen} as you decided to give freerun. {darkred}Deal {green}with {lightblue}it.{default}"
 	}
 	"You cannot activate CT"
 	{
-		"en"		"{lightgreen}You can not activate any {darkred}Traps{lightgreen} as {orange}Terrorist{lightgreen} gave {blue}Counter-Terrorists{lightgreen} a freerun."
+		"en"		"{lightgreen}You can not activate any {darkred}Traps{lightgreen} as {orange}Terrorist{lightgreen} gave {lightblue}Counter-Terrorists{lightgreen} a freerun."
 	}
 }
