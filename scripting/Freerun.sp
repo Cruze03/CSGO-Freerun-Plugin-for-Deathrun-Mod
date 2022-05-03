@@ -1,36 +1,46 @@
-#pragma semicolon 1
-
 #include <sourcemod>
 #include <sdktools>
 #include <sdkhooks>
 #include <cstrike>
-#include <csgo_colors>
+#include <multicolors>
+#include <freerun>
 
-#define PLUGIN_VERSION "1.2"
+#define PLUGIN_VERSION "1.3"
 
-ConVar gc_bfrEnabled, gc_ifrTime, gc_sPrefix;
+#pragma semicolon 1
+#pragma newdecls required
 
-float g_iFreerunTime;
-char g_PrefixName[128];
+ConVar g_hEnabled, g_hTime, g_hPrefix;
+
+float g_fFreerunTime;
+char g_sPrefixName[128];
 
 int g_bEnabled;
-bool Freerun = false;
-bool FreerunTime = false;
+bool g_bFreerun = false;
+bool g_bFreerunTime = false;
 
-public Plugin:myinfo =
+Handle g_hOnFreerun;
+
+public Plugin myinfo =
 {
 	name = "Freerun!",
 	author = "Cruze",
 	description = "Freerun plugin for deathrun mod because freerun is freerun! ok?",
 	version = PLUGIN_VERSION,
 	url = "http://steamcommunity.com/profiles/76561198132924835"
+};
+
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+	g_hOnFreerun = CreateGlobalForward("FR_OnFreerun", ET_Ignore, Param_Cell);
+	return APLRes_Success;
 }
 
 public void OnPluginStart()
 {
-	gc_bfrEnabled          = CreateConVar("sm_freerun_enable", "1", 												"Whether to enable plugin. 1 to enable, 0 to disable.");
-	gc_sPrefix         	 = CreateConVar("sm_freerun_prefix", "[{purple}♚ {green}FreeRun {purple}♚{default}] ", "Prefix of the plugin. Leave blank for no prefix.");
-	gc_ifrTime             = CreateConVar("sm_freerun_time", "120.0", 											"The time during which T can enter the command. 120.0 = ✔. 120 = ✖");
+	g_hEnabled          = CreateConVar("sm_freerun_enable", "1", 												"Whether to enable plugin. 1 to enable, 0 to disable.");
+	g_hPrefix         	 = CreateConVar("sm_freerun_prefix", "[{purple}♚ {green}FreeRun {purple}♚{default}] ", "Prefix of the plugin. Leave blank for no prefix.");
+	g_hTime             = CreateConVar("sm_freerun_time", "120.0", 											"The time during which T can enter the command. 120.0 = ✔. 120 = ✖");
    
 	HookEvent("round_start", OnFreerunRoundStart);
    
@@ -40,9 +50,9 @@ public void OnPluginStart()
 	AutoExecConfig(true, "dr_freerun");
 	LoadTranslations("cruze_freerun.phrases");
 	
-	HookConVarChange(gc_bfrEnabled, OnSettingChanged);
-	HookConVarChange(gc_ifrTime, OnSettingChanged);
-	HookConVarChange(gc_sPrefix, OnSettingChanged);
+	HookConVarChange(g_hEnabled, OnSettingChanged);
+	HookConVarChange(g_hTime, OnSettingChanged);
+	HookConVarChange(g_hPrefix, OnSettingChanged);
 }
 public int OnSettingChanged(Handle convar, const char[] oldValue, const char[] newValue)
 {
@@ -51,25 +61,25 @@ public int OnSettingChanged(Handle convar, const char[] oldValue, const char[] n
 
 	bool iNewValue = !!StringToInt(newValue);
 
-	if(convar == gc_bfrEnabled)
+	if(convar == g_hEnabled)
 	{
 		g_bEnabled = (iNewValue);
 	}
-	else if (convar == gc_ifrTime)
+	else if (convar == g_hTime)
 	{
-		g_iFreerunTime = StringToFloat(newValue);
+		g_fFreerunTime = StringToFloat(newValue);
 	}
-	else if (convar == gc_sPrefix)
+	else if (convar == g_hPrefix)
 	{
-		Format(g_PrefixName, sizeof(g_PrefixName), newValue);
+		Format(g_sPrefixName, sizeof(g_sPrefixName), newValue);
 	}
 }
 public void OnConfigsExecuted()
 {
-	g_bEnabled = GetConVarBool(gc_bfrEnabled);
-	g_iFreerunTime	= GetConVarFloat(gc_ifrTime);
+	g_bEnabled = GetConVarBool(g_hEnabled);
+	g_fFreerunTime	= GetConVarFloat(g_hTime);
 	
-	GetConVarString(gc_sPrefix, g_PrefixName, sizeof(g_PrefixName));
+	GetConVarString(g_hPrefix, g_sPrefixName, sizeof(g_sPrefixName));
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
@@ -78,24 +88,24 @@ public void OnEntityCreated(int entity, const char[] classname)
 }
 public void OnFreerunRoundStart(Handle event, char[] name, bool dbc)
 {
-	Freerun = false;
-	FreerunTime = true;
-	CreateTimer(GetConVarFloat(gc_ifrTime), freeruntime);
+	g_bFreerun = false;
+	g_bFreerunTime = true;
+	CreateTimer(GetConVarFloat(g_hTime), freeruntime);
 	for(int i = 1; i <= MaxClients; i++)
     {
         if(IsClientInGame(i) && GetClientTeam(i) == 2)
         {
 			
 			if (g_bEnabled)
-				//CPrintToChat(i,"%s Type {green}!fr{default} to give {blue}Counter-Terrorists {default}a {green}freerun!", g_PrefixName);
-				CPrintToChat(i,"%s%t", g_PrefixName, "RoundStart Message");
+				//CPrintToChat(i,"%s Type {green}!fr{default} to give {blue}Counter-Terrorists {default}a {green}freerun!", g_sPrefixName);
+				CPrintToChat(i,"%s%t", g_sPrefixName, "RoundStart Message");
         }
     }
 }
  
 public Action freeruntime(Handle freeruntime)
 {
-	FreerunTime = false;
+	g_bFreerunTime = false;
 }
  
 public Action CMD_Freerun(int client, int args)
@@ -106,42 +116,46 @@ public Action CMD_Freerun(int client, int args)
 		{
 			if (client == 0 || !IsClientInGame(client) || GetClientTeam(client) != 2) 
 			{
-				//CPrintToChat(client, "%s You need to be {orange}Terrorist {default}in order have access to this command!", g_PrefixName);
-				CPrintToChat(client, "%s%t", g_PrefixName, "You need to be T");
+				//CPrintToChat(client, "%s You need to be {orange}Terrorist {default}in order have access to this command!", g_sPrefixName);
+				CPrintToChat(client, "%s%t", g_sPrefixName, "You need to be T");
 				return Plugin_Handled;
 			}
-			if (FreerunTime)
+			if (g_bFreerunTime)
 			{
-				Freerun = true;
+				Call_StartForward(g_hOnFreerun);
+				Call_PushCell(client);
+				Call_Finish();
+				
+				g_bFreerun = true;
 				for(int iClient = 1; iClient <= MaxClients; iClient++)
 				{
 					if(IsClientInGame(iClient) && GetClientTeam(iClient) == 3)
 					{
-						//CPrintToChat(iClient, "%s{orange}Terrorist{default} can no longer press trap buttons!", g_PrefixName);
-						CPrintToChat(iClient, "%s%t", g_PrefixName, "FreerunCTMsg");
+						//CPrintToChat(iClient, "%s{orange}Terrorist{default} can no longer press trap buttons!", g_sPrefixName);
+						CPrintToChat(iClient, "%s%t", g_sPrefixName, "FreerunCTMsg");
 					}
 				}
-				//CPrintToChatAll("%s The {orange}Terrorist {default}decided to give a {green}FREERUN {default}to everyone this round, {green}RUN! {default}:D", g_PrefixName);
-				CPrintToChatAll("%s%t", g_PrefixName, "Freerun!");
-				PrintHintTextToAll("%t", "Freerun Hint!");
+				//CPrintToChatAll("%s The {orange}Terrorist {default}decided to give a {green}FREERUN {default}to everyone this round, {green}RUN! {default}:D", g_sPrefixName);
+				CPrintToChatAll("%s%t", g_sPrefixName, "g_bFreerun!");
+				PrintHintTextToAll("%t", "g_bFreerun Hint!");
 				//PrintHintTextToAll("<b>Its <font color='#00ff00'>FREERUN!</font></b>");
 			}
-			else if (Freerun) 
+			else if (g_bFreerun) 
 			{
-				//CPrintToChat(client, "%s You have already used this command!", g_PrefixName);
-				CPrintToChat(client, "%s%t", g_PrefixName, "Already Used");
+				//CPrintToChat(client, "%s You have already used this command!", g_sPrefixName);
+				CPrintToChat(client, "%s%t", g_sPrefixName, "Already Used");
 			}
 			else
 			{
-				int frTime = RoundToFloor(g_iFreerunTime);
-				//CPrintToChat(client, "%s You can use this command in first {darkred}%d {default}seconds only!", g_PrefixName, frTime);
-				CPrintToChat(client, "%s%t", g_PrefixName, "Too Late", frTime);
+				int frTime = RoundToFloor(g_fFreerunTime);
+				//CPrintToChat(client, "%s You can use this command in first {darkred}%d {default}seconds only!", g_sPrefixName, frTime);
+				CPrintToChat(client, "%s%t", g_sPrefixName, "Too Late", frTime);
 			}
 		}
 		else
 		{
-			//CPrintToChat(client, "You need to be alive to use this command!", g_PrefixName);
-			CPrintToChat(client, "%s%t", g_PrefixName, "You need to be alive");
+			//CPrintToChat(client, "You need to be alive to use this command!", g_sPrefixName);
+			CPrintToChat(client, "%s%t", g_sPrefixName, "You need to be alive");
 		}
 		return Plugin_Handled;
 	}
@@ -162,18 +176,18 @@ public Action OnButtonUse(int entity, int activator, int client, UseType type, f
 	{
 		return Plugin_Continue;
 	}
-	if(Freerun)
+	if(g_bFreerun)
 	{ 
 		if(GetClientTeam(client) == 2)
 		{
-			//CPrintToChat(client, "%s {lightgreen}You can not activate any {darkred}Traps{lightgreen} as you decided to give freerun. {darkred}Deal {green}with {blue}it.{default}", g_PrefixName);
-			CPrintToChat(client, "%s%t", g_PrefixName, "You cannot activate"); 
+			//CPrintToChat(client, "%s {lightgreen}You can not activate any {darkred}Traps{lightgreen} as you decided to give freerun. {darkred}Deal {green}with {blue}it.{default}", g_sPrefixName);
+			CPrintToChat(client, "%s%t", g_sPrefixName, "You cannot activate"); 
 			return Plugin_Handled;
 		}
 		else if(GetClientTeam(client) == 3)
 		{
-			//CPrintToChat(client, "{lightgreen}You can not activate any {darkred}Traps{lightgreen} as {orange}Terrorist{lightgreen} gave {blue}Counter-Terrorists{lightgreen} a freerun.", g_PrefixName, "You cannot activate CT");
-			CPrintToChat(client, "%s%t", g_PrefixName, "You cannot activate CT");
+			//CPrintToChat(client, "{lightgreen}You can not activate any {darkred}Traps{lightgreen} as {orange}Terrorist{lightgreen} gave {blue}Counter-Terrorists{lightgreen} a freerun.", g_sPrefixName, "You cannot activate CT");
+			CPrintToChat(client, "%s%t", g_sPrefixName, "You cannot activate CT");
 			return Plugin_Handled;
 		}
 	}
